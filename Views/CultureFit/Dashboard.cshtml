@@ -1,0 +1,84 @@
+﻿@{
+    ViewBag.Title = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+
+<div id="dashboardContainer" data-ng-controller="dashboardController as dash" data-ng-app="myApp" data-ng-cloak>
+    <div id="column1Listings" class="col-xs-3 mainColumn">
+        <h2 id="companyHeader" class="columnHeader">The Smart Company</h2>
+
+        <h3>Job Postings</h3>
+
+        @*<label class="departmentLabel">Engineering</label>*@
+        <div class="list-group">
+            <a ng-repeat="listing in dash.listings" class="listingLink list-group-item" ng-click="dash.GetSubmissionsByListingID(listing, $event)">{{listing.Role}}</a>
+
+        </div>
+        
+
+
+    </div>
+    <div id="column2Submissions" class="col-xs-4 mainColumn list-group">
+        <h2 id="listingHeader" class="columnHeader">{{dash.listingHeader}}</h2>
+
+        <h3>Applicants</h3>
+
+        @*<div ng-repeat="applicant in dash.applicants">
+                <a class="listingLink" ng-click="dash.GetReviewsBySubmissionID(applicant.SubmissionID)">{{applicant.FirstName}}</a>
+            </div>*@
+        <!--get the review/ratings system to work-->
+        <div ng-repeat="applicant in dash.applicants | orderBy: '-percent'" ng-click="dash.switchApplicant(applicant, $event)" class="applicantContainer list-group-item">
+            <a>{{applicant.FirstName}} {{applicant.LastName}}</a>
+            <br />
+            <span class="stars" data-rating="{{applicant.percent}}" data-num-stars="5"></span>
+            @*{{applicant.PhoneNumber} {{applicant.Email}}*@
+        </div>
+
+    </div>
+    <div id="column3Reviews" class="col-xs-5 mainColumn">
+        <h2 id="applicantHeader" class="columnHeader">{{dash.applicantHeader}}</h2>
+
+        <h3>Review</h3>
+
+        @*<div ng-repeat="review in dash.reviews">
+                <a class="listingLink">Team Member A</a>
+            </div>*@
+
+        
+        <div ng-if="dash.displayApplicant">
+
+            <div class="col-sm-3">
+                <button type="button" class="btn btn-block col-sm-2 btn-primary pull-right" style="width: 100px; height: 100%; ali">Share on Slack</button>
+            </div>
+            
+            <div class="col-sm-6 text-center" style="padding-bottom: 10px;">
+
+                {{dash.displayApplicant.FirstName}} {{dash.displayApplicant.LastName}}
+                <br />
+                {{dash.displayApplicant.Email}}
+                <br />
+                {{dash.displayApplicant.PhoneNumber}}
+                <br /><br />
+                <span>Likes:</span>
+                <br />
+                <span>{{dash.displayApplicant.likes}} Out of {{dash.displayApplicant.numOfReviews}} Reviews</span>
+                <div id="reviewScore" class="row">
+                    <span id="reviewStars" class="stars" data-rating="{{vm.reviewPercent}}" data-num-stars="5"></span>
+                </div>
+            </div>
+            <div id="videoContainer">
+                <video width="80%" controls>
+                    <source ng-src="{{dash.displayApplicant.VideoUrl}}" type="video/mp4">
+                    <source ng-src="{{dash.displayApplicant.VideoUrl}}" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+            <object data="{{dash.displayApplicant.ResumeUrl}}" type="application/pdf" style="width: 80%; height: 400px;"></object>
+        </div>
+    </div>
+    <p style="clear:both"></p>
+</div>

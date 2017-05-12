@@ -1,0 +1,205 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+<div ng-app="zipHackathon">
+    <div ng-controller="mainController as main">
+        <form name="main.form">
+            <div>
+                <label for="resumeFile">Resume</label>
+                <input type="file" id="resumeFile" value="main.files" ng-model="main.files">
+                <button type="button" ng-click="main.submitResumeFile()">Upload</button>
+            </div>
+            <div>
+                <label for="videoFile">Video</label>
+                <input type="file" id="videoFile" value="main.files" ng-model="main.files">
+                <button type="button" ng-click="main.submitVideoFile()">Upload</button>
+            </div>
+        </form>
+
+        <!--get the review/ratings system to work-->
+        <div ng-repeat="applicant in main.applicants">
+            <a ng-click="main.switchApplicant(applicant)">{{applicant.FirstName}} {{applicant.LastName}} {{applicant.PhoneNumber}} {{applicant.Email}} {{applicant.percent}}</a>
+        </div>
+        <div class="container">
+            <span>{{main.displayApplicant.FirstName}} {{main.displayApplicant.LastName}} </span>
+            <span>Likes: {{main.displayApplicant.likes}} Number of Reviews: {{main.displayApplicant.numOfReviews}} </span>
+            <span>This is where the video player will be</span>
+        </div>
+        <div class="container">
+            <form name="main.raitingsForm" ng-submit="main.submitReview()">
+                <button type="button" ng-click="main.setLike()">Like</button>
+                <button type="button" ng-click="main.setDislike()">Don't Like</button>
+                <input type="text" placeholder="Name" ng-model="main.employee" />
+                <input type="text" placeholder="Comment" ng-model="main.comment" />
+                <button type="submit">Submit Review</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="~/Scripts/services/cultureFit.services.reviews.js"></script>
+<script src="~/Scripts/services/cultureFit.services.uploads.js"></script>
+<script src="~/Scripts/services/cultureFit.services.submissions.js"></script>
+<script>
+    (function () {
+        'use-strict';
+        angular.module('zipHackathon', [])
+            .controller('mainController', MainController);
+
+        MainController.$inject = ["$scope"];
+
+        function MainController($scope) {
+            var vm = this;
+            vm.submitVideoFile = _submitVideoFile;
+            vm.submitResumeFile = _submitResumeFile;
+            vm.videoFileUrl;
+            vm.resumeFileUrl;
+
+
+
+            vm.render = _render;
+            vm.switchApplicant = _switchApplicant;
+            vm.setLike = _setLike;
+            vm.setDislike = _setDislike;
+            vm.submitReview = _submitReview;
+            vm.displayApplicant;
+            vm.applicants = [];
+            vm.likeFlag;
+            vm.employee;
+            vm.comment;
+
+            $scope.content = $sce.trustAsResourceUrl(vm.displayApplicant.ResumeUrl);
+
+            vm.render();
+
+            function _render() {
+                cultureFit.submissions.selectByListingId(2, _onGetSubmissionSuccess, _onGetSubmissionError);
+            };
+
+            function _onGetSubmissionSuccess(data) {
+                console.log(data.Items);
+                var applicantsRawData = data.Items;
+                var listingTable = {};
+                var likes = 0;
+
+                for (var i = 0; i < applicantsRawData.length; i++) {
+                    var key = applicantsRawData[i].UserId;
+                    listingTable[key] = applicantsRawData[i];
+                    listingTable[key].likes = 0;
+                    listingTable[key].numOfReviews = 0;
+                };
+
+                for (var i = 0; i < applicantsRawData.length; i++) {
+                    var key = applicantsRawData[i].UserId;
+                    if (listingTable[key].UserId === applicantsRawData[i].UserId) {
+                        listingTable[key].numOfReviews = listingTable[key].numOfReviews + 1;
+                        if (applicantsRawData[i].Rating === 1) {
+                            listingTable[key].likes = listingTable[key].likes + 1;
+                        };
+                    };
+                };
+
+                var keys = _findUniqueKeys(listingTable);
+
+                for (var i = 0; i < keys.length; i++) {
+                    var percent = listingTable[keys[i]].likes / listingTable[keys[i]].numOfReviews;
+                    listingTable[keys[i]].percent = Math.round(percent * 100)  + "%";
+                    vm.applicants.push(listingTable[keys[i]]);
+                };
+
+                _apply();
+            };
+
+            function _findUniqueKeys(table) {
+                var keys = [];
+                for (var key in table) {
+                    keys.push(key);
+                };
+                return keys;
+            };
+
+            function _apply() {
+                $scope.$apply();
+            };
+
+            function _onGetSubmissionError(data) {
+                console.log(data);
+            };
+
+            function _switchApplicant(applicant) {
+                vm.displayApplicant = applicant;
+            };
+
+            function _setLike() {
+                vm.likeFlag = true;
+            };
+
+            function _setDislike() {
+                vm.likeFlag = false;
+            };
+
+            function _submitReview() {
+                vm.applicantReview = {
+                    "SubmissionID": vm.displayApplicant.SubmissionId,
+                    "Comment": vm.comment,
+                    "Employee": vm.employee,
+                    "DepartmentId": 1,
+                };
+
+                if (vm.likeFlag) {
+                    vm.applicantReview.Rating = 1;
+                } else {
+                    vm.applicantReview.Rating = 0;
+                };
+
+                cultureFit.reviews.Create(vm.applicantReview, _onReviewCreateSuccess, _onReviewCreateError);
+
+            };
+
+            function _onReviewCreateSuccess(data) {
+                console.log(data);
+            };
+
+            function _onReviewCreateError(data) {
+                console.log(data);
+            };
+
+
+
+
+
+
+
+
+
+
+            function _submitVideoFile() {
+                var file = document.getElementById("videoFile").files[0];
+                cultureFit.uploads.create(file, _onVideoSuccess, _onVideoError);
+            };
+
+            function _onVideoSuccess(data) {
+                console.log(data);
+                vm.videoFileUrl = data.Items[0];
+            };
+            function _onVideoError(jqXHR) {
+                console.log(jqXHR);
+            };
+
+            function _submitResumeFile() {
+                var file = document.getElementById("resumeFile").files[0];
+                cultureFit.uploads.create(file, _onResumeSuccess, _onResumeError);
+            };
+
+            function _onResumeSuccess(data) {
+                vm.resumeFileUrl = data.Items[0];
+            };
+
+            function _onResumeError(jqXHR) {
+                console.log(jqXHR);
+            };
+
+        };
+    })();
+</script>
