@@ -5,7 +5,8 @@ Built in 24 hours by team of 5 at the ZipRecruiter Hackathon in Santa Monica; Ma
 Runner-Up in Overall MVP (Minimal Viable Product) category.
 
  Implemented ASP.NET MVC, ADO.NET, and C# for middle tier; SQL Server for backend; AngularJS, jQuery, and HTML5/CSS3 for the front-end UI; Visual Studio, TFS to maintain shared code base.
- *Code presented in this repository is incomplete and not suited for deployment.
+ 
+ *Code presented in this public repository is incomplete and not suited for deployment. The app is not currently live.
  
  - - - - - - - -
 
